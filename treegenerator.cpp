@@ -122,9 +122,10 @@ void TreeGenerator::min_voxel(int *min, std::vector<int*> voxels)
 	//printf("\tvoxels.size() = %d\n", voxels.size());
 
 	//shuffle
-	//std::random_shuffle(voxels.begin(), voxels.end());
+	std::random_shuffle(voxels.begin(), voxels.end());
+	printf("first voxel = (%d, %d, %d)\n", voxels.at(0)[0], voxels.at(0)[1], voxels.at(0)[2]);
 
-	float min_s = shadow_grid [voxels[0][0]] [voxels[0][1]] [voxels[0][2]];
+	float min_s = shadow_grid [voxels.at(0)[0]] [voxels.at(0)[1]] [voxels.at(0)[2]];
 	min[0] = voxels.at(0)[0];
 	min[1] = voxels.at(0)[1];
 	min[2] = voxels.at(0)[2];
@@ -413,7 +414,7 @@ void TreeGenerator::propogate_light_info()
 		int num_nodes = branches.at(i).nodes.size()-2;
 		//printf("Num nodes of branch %d: %d. Copying...\n", i, num_nodes);
 		//copy references to nodes - ignore base and terminal
-		for(int j=1; j<num_nodes; j++)
+		for(int j=1; j<=num_nodes; j++)
 		{
 			//printf("Node %d\n", j);
 			sorted.push_back(branches.at(i).nodes.at(j));
@@ -520,20 +521,19 @@ void TreeGenerator::calculate_growth_direction(node *start_node, double length)
 
 	//final direction is combination of three
 
-	start_node->dir[0] = 0.5 * xi[0] + 0.5 * eta[0] + 1.0 * def[0];
-	start_node->dir[1] = 0.5 * xi[1] + 0.5 * eta[1] + 1.0 * def[1];
-	start_node->dir[2] = 0.5 * xi[2] + 0.5 * eta[2] + 1.0 * def[2];
+	start_node->dir[0] = 0.5 * xi[0] + 0.3 * eta[0] + 1.0 * def[0];
+	start_node->dir[1] = 0.5 * xi[1] + 0.3 * eta[1] + 1.0 * def[1];
+	start_node->dir[2] = 0.5 * xi[2] + 0.3 * eta[2] + 1.0 * def[2];
 
 	normalize(start_node->dir);
 
 }
 
 
-void TreeGenerator::grow_metamors(branch *b, int start, int num_metamors, double length)
+void TreeGenerator::grow_metamors(branch *b, node *start_node, int num_metamors, double length)
 {
 	//printf("Number of metamors in this step: %d\n", num_metamors);
 
-	node *start_node = b->nodes.at(start);
 	vec3_t start_dir;
 	start_dir[0] = start_node->dir[0];
 	start_dir[1] = start_node->dir[1];
@@ -646,11 +646,12 @@ void TreeGenerator::grow_tree_step()
 	int num_branches = branches.size();
 	for(int i=0; i<num_branches; i++)
 	{
-		int num_nodes = branches.at(i).nodes.size();
-		for(int j=1; j<num_nodes; j++)
+		int num_nodes = branches.at(i).sorted_nodes.size();
+		for(int j=0; j<num_nodes; j++)
 		{
-			node *curr_node = branches.at(i).nodes.at(j);
+			node *curr_node = branches.at(i).sorted_nodes.at(j);
 			double resources = get_resources(branches.at(i), curr_node);
+			printf("RESOURCES = %f\n", resources);
 			//printf("Branch %d, Node %d, resources = %f\n", i, j, resources);
 			if(curr_node->type == BRANCH)
 			{
@@ -684,7 +685,7 @@ void TreeGenerator::grow_tree_step()
 				//create new branch
 				branch *b = new branch;
 				b->nodes.push_back(branch_node);
-				grow_metamors(b, 0, num_metamors, length);
+				grow_metamors(b, branch_node, num_metamors, length);
 				branches.push_back(*b);
 			}
 			else if(curr_node->type == TERMINAL_BUD)
@@ -699,7 +700,7 @@ void TreeGenerator::grow_tree_step()
 				double length = resources / num_metamors;
 				curr_node->type = AXILLARY_BUD;
 				//use old branch
-				grow_metamors(&branches.at(i), j, num_metamors, length);
+				grow_metamors(&branches.at(i), curr_node, num_metamors, length);
 			}
 		}
 	}

@@ -44,7 +44,7 @@ private:
 	double weight_function(int, double, double, double, int);
 	double get_resources(branch, node*);
 	
-	void grow_metamors(branch *, int, int, double);
+	void grow_metamors(branch *, node *, int, double);
 	void locations_from_voxel(int *, vec3_t *);
 	void simple_location_from_voxel(int *, vec3_t);
 	void calculate_location(node *, node *, double);
